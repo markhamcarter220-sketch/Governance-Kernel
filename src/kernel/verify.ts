@@ -7,11 +7,28 @@ import { validateAuthority } from './authority';
 import { validateOperationGating } from './classifier';
 import { validateCoherence } from './coherence';
 import { evaluateFreeze, checkSplitBrain } from './freeze';
+import { validateWorkflowStructure } from './schema-validator';
 
 export function verifyWorkflow(workflow: Workflow): VerificationResult {
   const violations: Violation[] = [];
 
-  // Run all validation checks
+  // FIRST: Validate JSON schema structure
+  // If schema is invalid, structural checks may fail
+  const schemaViolations = validateWorkflowStructure(workflow);
+  violations.push(...schemaViolations);
+
+  // If schema validation fails critically, short-circuit
+  // (But still return results for debugging)
+  if (schemaViolations.length > 0) {
+    const summary = `Workflow validation FAILED: Schema validation errors (${schemaViolations.length} issue(s))`;
+    return {
+      valid: false,
+      violations,
+      summary,
+    };
+  }
+
+  // Run all invariant validation checks
   violations.push(...validateAuthority(workflow));
   violations.push(...validateOperationGating(workflow));
   violations.push(...validateCoherence(workflow));
