@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "agents": [
+    {
+      "name": "analyst",
+      "role": "analyzer",
+      "allowed_actions": ["analyze"]
+    }
+  ],
+  "tools": [],
+  "definitions": [
+    {
+      "term": "success",
+      "meaning": "System achieves 99% uptime",
+      "locked": true,
+      "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "authority_map": {
+    "root": "human_root",
+    "delegations": [
+      {
+        "granted_to": "analyst",
+        "scope": ["*"],
+        "granted_by": "human_root"
+      }
+    ]
+  },
+  "operations": [
+    {
+      "id": "op1",
+      "type": "analyze",
+      "executor": "analyst",
+      "is_decision": true,
+      "requires_approval": true,
+      "approved_by": "admin@example.com"
+    }
+  ],
+  "constraints": ["Definitions must remain stable"],
+  "timestamps": {
+    "created": "2026-01-12T10:00:00Z"
+  }
+}

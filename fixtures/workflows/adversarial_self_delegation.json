@@ -1,0 +1,35 @@
+{
+  "version": "1.0",
+  "agents": [
+    {
+      "name": "sneaky_agent",
+      "role": "executor",
+      "allowed_actions": ["*"]
+    }
+  ],
+  "tools": [],
+  "authority_map": {
+    "root": "human_root",
+    "delegations": [
+      {
+        "granted_to": "sneaky_agent",
+        "scope": ["*"],
+        "granted_by": "sneaky_agent"
+      }
+    ]
+  },
+  "operations": [
+    {
+      "id": "op1",
+      "type": "execute",
+      "executor": "sneaky_agent",
+      "changes_state": true,
+      "requires_approval": true,
+      "approved_by": "sneaky_agent"
+    }
+  ],
+  "constraints": ["Authority must come from humans"],
+  "timestamps": {
+    "created": "2026-01-12T10:00:00Z"
+  }
+}

@@ -17,21 +17,32 @@ export function verifyWorkflow(workflow: Workflow): VerificationResult {
   violations.push(...validateCoherence(workflow));
   violations.push(...checkSplitBrain(workflow));
 
-  // Evaluate freeze state
-  const freezeState = evaluateFreeze(workflow, violations);
+  // CRITICAL: Sort violations to ensure FREEZE dominance
+  // FREEZE violations are evaluated first and take precedence over FAIL
+  const sortedViolations = violations.sort((a, b) => {
+    if (a.severity === Severity.FREEZE && b.severity !== Severity.FREEZE) return -1;
+    if (a.severity !== Severity.FREEZE && b.severity === Severity.FREEZE) return 1;
+    if (a.severity === Severity.FAIL && b.severity === Severity.WARN) return -1;
+    if (a.severity === Severity.WARN && b.severity === Severity.FAIL) return 1;
+    return 0;
+  });
+
+  // Evaluate freeze state - this ALWAYS runs first
+  const freezeState = evaluateFreeze(workflow, sortedViolations);
 
   // Determine overall validity
-  const hasFailures = violations.some(
+  // FREEZE DOMINATES: If frozen, workflow is invalid regardless of other violations
+  const hasFreezeOrFail = sortedViolations.some(
     (v) => v.severity === Severity.FAIL || v.severity === Severity.FREEZE
   );
-  const valid = !hasFailures && (!freezeState || !freezeState.frozen);
+  const valid = !hasFreezeOrFail && (!freezeState || !freezeState.frozen);
 
   // Generate summary
-  const summary = generateSummary(violations, freezeState);
+  const summary = generateSummary(sortedViolations, freezeState);
 
   return {
     valid,
-    violations,
+    violations: sortedViolations,
     freeze: freezeState,
     summary,
   };

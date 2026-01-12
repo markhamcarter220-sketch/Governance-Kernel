@@ -1,0 +1,49 @@
+{
+  "version": "1.0",
+  "agents": [
+    {
+      "name": "agent_a",
+      "role": "coordinator",
+      "allowed_actions": ["coordinate"]
+    },
+    {
+      "name": "agent_b",
+      "role": "executor",
+      "allowed_actions": ["execute"]
+    }
+  ],
+  "tools": [],
+  "authority_map": {
+    "root": "human_root",
+    "delegations": [
+      {
+        "granted_to": "agent_a",
+        "scope": ["*"],
+        "granted_by": "human_root"
+      },
+      {
+        "granted_to": "agent_b",
+        "scope": ["*"],
+        "granted_by": "agent_a"
+      },
+      {
+        "granted_to": "agent_a",
+        "scope": ["coordinate"],
+        "granted_by": "agent_b"
+      }
+    ]
+  },
+  "operations": [
+    {
+      "id": "op1",
+      "type": "coordinate",
+      "executor": "agent_a",
+      "requires_approval": true,
+      "approved_by": "admin@example.com"
+    }
+  ],
+  "constraints": ["No circular authority"],
+  "timestamps": {
+    "created": "2026-01-12T10:00:00Z"
+  }
+}

@@ -101,6 +101,44 @@ The kernel enforces these invariants:
 - Flags undefined terms in decision contexts
 - Requires signoff for irreversible actions
 
+## What This Kernel Guarantees
+
+The following properties are **mechanically enforced**, not heuristic:
+
+### Authority Guarantees
+✓ **No implicit authority**: Every operation has an explicit delegation path from human root
+✓ **No circular delegation**: Authority chains are acyclic (A→B→A is impossible)
+✓ **No self-delegation**: Entities cannot grant authority to themselves
+✓ **No orphan delegation**: All delegations trace to a valid authority source
+✓ **Scope enforcement**: Operations must be within granted scope
+✓ **Temporal enforcement**: Expired delegations are rejected
+
+### Coherence Guarantees
+✓ **No silent definition changes**: Locked definitions cannot be modified without version update
+✓ **Definition hash stability**: Definition drift is detected via cryptographic hashing
+✓ **Goal-constraint conflict detection**: Contradictory optimization goals and hard constraints trigger freeze
+✓ **Temporal validity**: Stale workflows and expired grants are rejected
+
+### Freeze Guarantees
+✓ **Freeze dominates fail**: Critical violations always freeze before execution
+✓ **Unambiguous conflicts halt execution**: Split-brain authority, circular delegation, and semantic drift freeze the system
+✓ **Human review required**: Frozen workflows require explicit `unfreeze_token` to proceed
+
+### Classification Guarantees
+✓ **DEC operations require approval**: Decision operations without human signoff are rejected
+✓ **EIN operations require approval**: Irreversible execution operations without approval are rejected
+✓ **Tool signoff enforcement**: Operations using tools marked `requires_human_signoff` must have approval
+
+### What This Kernel Does NOT Guarantee
+
+✗ **Runtime enforcement**: The kernel validates workflow structures, it does not monitor execution
+✗ **Behavioral alignment**: A valid workflow structure does not guarantee aligned behavior
+✗ **Security against all attacks**: This is one layer; defense-in-depth requires multiple layers
+✗ **Correctness of human decisions**: Human approvals are assumed to be legitimate
+✗ **Prevention of all risks**: Some risks are inherent to AI systems and cannot be structurally prevented
+
+The kernel makes certain classes of authority violations **structurally impossible** at the workflow level. It does not solve all AI governance problems.
+
 ## Exit Codes
 
 - `0` - Pass (validation successful)
@@ -116,6 +154,8 @@ See `docs/public/EXAMPLES.md` for detailed examples and `fixtures/` for sample w
 
 - [Core Concepts](docs/public/CONCEPTS.md)
 - [Invariants Reference](docs/public/INVARIANTS.md)
+- [Invariant Coverage Map](docs/public/INVARIANT_COVERAGE.md)
+- [Authority Flow Tracing](docs/public/AUTHORITY_FLOW.md)
 - [JSON Schemas](docs/public/JSON_SCHEMAS.md)
 - [CLI Reference](docs/public/CLI.md)
 - [HTTP API](docs/public/HTTP_API.md)

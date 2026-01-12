@@ -5,12 +5,19 @@
 export enum ViolationCode {
   AIT1_IMPLICIT_AUTHORITY = 'AIT1_IMPLICIT_AUTHORITY',
   AIT1_MISSING_DELEGATION_PATH = 'AIT1_MISSING_DELEGATION_PATH',
+  AIT1_CIRCULAR_DELEGATION = 'AIT1_CIRCULAR_DELEGATION',
+  AIT1_SELF_DELEGATION = 'AIT1_SELF_DELEGATION',
+  AIT1_ORPHAN_DELEGATION = 'AIT1_ORPHAN_DELEGATION',
+  AIT1_SCOPE_VIOLATION = 'AIT1_SCOPE_VIOLATION',
   MOC_DECISION_NOT_GATED = 'MOC_DECISION_NOT_GATED',
   MOC_EXECUTION_NOT_GATED = 'MOC_EXECUTION_NOT_GATED',
   CPT1_SEMANTIC_DRIFT = 'CPT1_SEMANTIC_DRIFT',
   CPT1_TEMPORAL_STALE = 'CPT1_TEMPORAL_STALE',
   CPT1_GOAL_CONSTRAINT_CONFLICT = 'CPT1_GOAL_CONSTRAINT_CONFLICT',
+  CPT1_DEFINITION_HASH_MISMATCH = 'CPT1_DEFINITION_HASH_MISMATCH',
+  CPT1_UNDEFINED_TERM_IN_DECISION = 'CPT1_UNDEFINED_TERM_IN_DECISION',
   SBAA_SPLIT_BRAIN = 'SBAA_SPLIT_BRAIN',
+  SBAA_CONTRADICTORY_DELEGATION = 'SBAA_CONTRADICTORY_DELEGATION',
   OMEGA_UNDEFINED_TERM_USED_IN_DECISION = 'OMEGA_UNDEFINED_TERM_USED_IN_DECISION',
   OMEGA_IRREVERSIBLE_WITHOUT_SIGNOFF = 'OMEGA_IRREVERSIBLE_WITHOUT_SIGNOFF',
   OMEGA_IMPLICIT_AUTHORITY_IN_TEXT = 'OMEGA_IMPLICIT_AUTHORITY_IN_TEXT',
@@ -51,6 +58,8 @@ export interface Definition {
   term: string;
   meaning: string;
   locked: boolean;
+  version?: string; // For authorized definition evolution
+  hash?: string; // SHA-256 hash for drift detection
 }
 
 export interface AuthorityGrant {
@@ -128,4 +137,23 @@ export interface ScanResult {
   violations: Violation[];
   clean: boolean;
   summary: string;
+}
+
+/**
+ * Authority trace for explicit path validation
+ * Traces authority flow from human root to operation executor
+ */
+export interface AuthorityTrace {
+  operation_id: string;
+  executor: string;
+  path: AuthorityTraceNode[];
+  valid: boolean;
+  failure_reason?: string;
+}
+
+export interface AuthorityTraceNode {
+  entity: string;
+  granted_by?: string;
+  scope: string[];
+  valid_until?: string;
 }

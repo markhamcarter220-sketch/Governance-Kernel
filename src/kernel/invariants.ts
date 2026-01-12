@@ -11,6 +11,18 @@ export const INVARIANT_EXPLANATIONS: Record<ViolationCode, string> = {
   [ViolationCode.AIT1_MISSING_DELEGATION_PATH]:
     'AIT-1 Violation: No valid delegation path exists from human_root to the executor. All authority must trace back to a human root through explicit delegations.',
 
+  [ViolationCode.AIT1_CIRCULAR_DELEGATION]:
+    'AIT-1 Violation: Circular delegation detected. Entity A delegates to B which delegates back to A (directly or indirectly). Authority chains must be acyclic.',
+
+  [ViolationCode.AIT1_SELF_DELEGATION]:
+    'AIT-1 Violation: Entity attempting to delegate authority to itself. Self-delegation is prohibited as it creates authority from nothing.',
+
+  [ViolationCode.AIT1_ORPHAN_DELEGATION]:
+    'AIT-1 Violation: Delegation granted by an entity that is not the authority root and has no delegation itself. All delegations must trace to root.',
+
+  [ViolationCode.AIT1_SCOPE_VIOLATION]:
+    'AIT-1 Violation: Operation type is outside the scope granted to the executor. Delegation scope must cover all operations performed.',
+
   [ViolationCode.MOC_DECISION_NOT_GATED]:
     'MOC Violation: Decision operation (DEC) is not gated by human approval. Operations that make value judgments or select among options must have explicit human signoff.',
 
@@ -26,8 +38,17 @@ export const INVARIANT_EXPLANATIONS: Record<ViolationCode, string> = {
   [ViolationCode.CPT1_GOAL_CONSTRAINT_CONFLICT]:
     'CPT-1 Violation: Goal and Constraint Invariant conflict detected. Optimization goals contradict hard constraints.',
 
+  [ViolationCode.CPT1_DEFINITION_HASH_MISMATCH]:
+    'CPT-1 Violation: Definition content has changed without version update. Definitions used in DEC/EIN operations must remain stable or be explicitly versioned.',
+
+  [ViolationCode.CPT1_UNDEFINED_TERM_IN_DECISION]:
+    'CPT-1 Violation: Decision or execution operation uses undefined terms. All terms used in critical operations must be explicitly defined.',
+
   [ViolationCode.SBAA_SPLIT_BRAIN]:
     'SBAA Violation: Split-Brain Authority detected. Multiple conflicting authority roots or decision sources exist. System must freeze until single authority is restored.',
+
+  [ViolationCode.SBAA_CONTRADICTORY_DELEGATION]:
+    'SBAA Violation: Contradictory delegations detected. Same entity has conflicting authority grants that cannot be reconciled.',
 
   [ViolationCode.OMEGA_UNDEFINED_TERM_USED_IN_DECISION]:
     'Ω-SCAN Violation: Artifact uses undefined terms in decision-making context. All terms used for decisions must be explicitly defined.',

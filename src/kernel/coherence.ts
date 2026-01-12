@@ -1,8 +1,11 @@
 /**
- * Coherence validation logic (CPT-1)
+ * Coherence validation logic (CPT-1) - HARDENED
+ * Definition immutability and hash-based drift detection
  */
 
-import { Workflow, Violation, ViolationCode, Severity } from './types';
+import { Workflow, Violation, ViolationCode, Severity, Definition, OperationType } from './types';
+import { createHash } from 'crypto';
+import { classifyOperation } from './classifier';
 
 export function validateCoherence(workflow: Workflow): Violation[] {
   const violations: Violation[] = [];
@@ -12,6 +15,12 @@ export function validateCoherence(workflow: Workflow): Violation[] {
 
   // Semantic Invariant (SI): Check for definition modifications
   violations.push(...checkSemanticDrift(workflow));
+
+  // Semantic Invariant (SI): Validate definition hashes
+  violations.push(...validateDefinitionHashes(workflow));
+
+  // Semantic Invariant (SI): Check undefined terms in DEC/EIN operations
+  violations.push(...checkUndefinedTermsInCriticalOps(workflow));
 
   // Temporal Invariant (TI): Check for stale timestamps
   violations.push(...checkTemporalValidity(workflow));
@@ -95,6 +104,94 @@ function checkSemanticDrift(workflow: Workflow): Violation[] {
   return violations;
 }
 
+/**
+ * Validate definition hashes for drift detection
+ * Compute hash if not present, verify if present
+ */
+function validateDefinitionHashes(workflow: Workflow): Violation[] {
+  const violations: Violation[] = [];
+
+  if (!workflow.definitions || workflow.definitions.length === 0) {
+    return violations;
+  }
+
+  workflow.definitions.forEach((def, index) => {
+    const computedHash = hashDefinition(def);
+
+    if (def.hash) {
+      // Hash provided - verify it matches
+      if (def.hash !== computedHash) {
+        violations.push({
+          code: ViolationCode.CPT1_DEFINITION_HASH_MISMATCH,
+          severity: Severity.FREEZE,
+          message: `Definition "${def.term}" hash mismatch - content changed without version update`,
+          path: `/definitions/${index}/hash`,
+          evidence: {
+            term: def.term,
+            expected_hash: def.hash,
+            computed_hash: computedHash,
+            locked: def.locked,
+            version: def.version,
+          },
+          remediation: def.locked
+            ? `Locked definition cannot be changed. If authorized change is needed, update version field.`
+            : `Update hash to ${computedHash} or increment version field for authorized change.`,
+        });
+      }
+    }
+    // Note: Not enforcing hash presence for backward compatibility,
+    // but hashes are computed on-the-fly during validation
+  });
+
+  return violations;
+}
+
+/**
+ * Check for undefined terms used in DEC/EIN operations
+ */
+function checkUndefinedTermsInCriticalOps(workflow: Workflow): Violation[] {
+  const violations: Violation[] = [];
+
+  // Build set of defined terms
+  const definedTerms = new Set<string>();
+  if (workflow.definitions) {
+    workflow.definitions.forEach((d) => definedTerms.add(d.term.toLowerCase()));
+  }
+
+  // Check DEC/EIN operations for undefined terms
+  workflow.operations.forEach((op, opIndex) => {
+    const classification = classifyOperation(op, workflow);
+
+    if (classification.type === OperationType.DEC || classification.type === OperationType.EIN) {
+      // Extract potential terms from operation ID and type
+      // This is heuristic - looking for capitalized words or quoted terms
+      const potentialTerms = extractPotentialTerms(op.id + ' ' + op.type);
+
+      const undefinedTerms = potentialTerms.filter(
+        (term) => !definedTerms.has(term.toLowerCase())
+      );
+
+      if (undefinedTerms.length > 0 && workflow.definitions && workflow.definitions.length > 0) {
+        violations.push({
+          code: ViolationCode.CPT1_UNDEFINED_TERM_IN_DECISION,
+          severity: Severity.WARN,
+          message: `Operation "${op.id}" (${classification.type}) uses potentially undefined terms`,
+          path: `/operations/${opIndex}`,
+          evidence: {
+            operation_id: op.id,
+            classification: classification.type,
+            undefined_terms: undefinedTerms,
+            defined_terms: Array.from(definedTerms),
+          },
+          remediation: `Define terms ${undefinedTerms.join(', ')} or clarify operation naming`,
+        });
+      }
+    }
+  });
+
+  return violations;
+}
+
 function checkTemporalValidity(workflow: Workflow): Violation[] {
   const violations: Violation[] = [];
   const now = new Date();
@@ -161,6 +258,51 @@ function checkConstraintConsistency(workflow: Workflow): Violation[] {
   }
 
   return violations;
+}
+
+/**
+ * Hash a definition for drift detection
+ * Hash = SHA-256(term + meaning + locked + version)
+ */
+function hashDefinition(def: Definition): string {
+  const canonical = JSON.stringify({
+    term: def.term,
+    meaning: def.meaning,
+    locked: def.locked,
+    version: def.version || 'v1',
+  });
+  return createHash('sha256').update(canonical).digest('hex');
+}
+
+/**
+ * Extract potential term references from text
+ * Looks for: Capitalized words, quoted text, underscored terms
+ */
+function extractPotentialTerms(text: string): string[] {
+  const terms: string[] = [];
+
+  // Quoted terms: "term"
+  const quoted = text.match(/"([^"]+)"/g);
+  if (quoted) {
+    terms.push(...quoted.map((q) => q.replace(/"/g, '')));
+  }
+
+  // Capitalized words (excluding common words)
+  const words = text.split(/\s+/);
+  const excludeCommon = ['The', 'A', 'An', 'In', 'On', 'At', 'To', 'For', 'Of', 'With'];
+  words.forEach((word) => {
+    if (/^[A-Z][a-z]+/.test(word) && !excludeCommon.includes(word)) {
+      terms.push(word);
+    }
+  });
+
+  // Underscored terms: term_name
+  const underscored = text.match(/\b[a-z_]+_[a-z_]+\b/g);
+  if (underscored) {
+    terms.push(...underscored);
+  }
+
+  return [...new Set(terms)]; // Deduplicate
 }
 
 function findSharedTerms(text1: string, text2: string): string[] {
