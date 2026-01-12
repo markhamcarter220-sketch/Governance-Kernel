@@ -1,0 +1,148 @@
+# Governance Kernel
+
+**Authority Firewall for AI/Agent Workflows**
+
+## What It Is
+
+Governance Kernel is a validation and governance system for AI/agent workflows. It enforces hard constraints on authority, decision-making, and operation execution through a set of mathematical invariants.
+
+**This is NOT an AI model.** It is a kernel that validates workflows/tools/agents against explicit governance rules.
+
+## What It Isn't
+
+- Not a permissions system (doesn't enforce at runtime)
+- Not an AI safety alignment tool (validates structures, not behaviors)
+- Not a model wrapper or inference layer
+- Not a workflow execution engine
+
+## Core Principles
+
+1. **Capability ≠ Authority**: Just because an agent *can* do something doesn't mean it has authority to do it
+2. **Hard Constraints Override Optimization**: Safety invariants are inviolable
+3. **Freeze on Ambiguity**: When conflicts arise, the system freezes rather than guessing
+4. **Explicit Authority Paths**: All authority must trace back to human root through explicit delegations
+
+## Quick Start
+
+### Installation
+
+```bash
+pnpm install
+pnpm build
+```
+
+### CLI Usage
+
+```bash
+# Verify a workflow
+pnpm gk verify fixtures/workflows/pass_minimal.json
+
+# Scan an artifact for governance violations
+pnpm gk scan fixtures/docs/sample_policy.md --type policy
+
+# Explain a violation code
+pnpm gk explain AIT1_IMPLICIT_AUTHORITY
+```
+
+### Library Usage
+
+```typescript
+import { verifyWorkflow, scanArtifact } from 'governance-kernel';
+
+const result = verifyWorkflow(workflowJson);
+if (!result.valid) {
+  console.log(result.violations);
+}
+
+const scanResult = scanArtifact(policyText, 'policy');
+if (!scanResult.clean) {
+  console.log(scanResult.violations);
+}
+```
+
+### HTTP Server
+
+```bash
+pnpm server
+# Server runs on http://localhost:3000
+
+# POST /verify - verify a workflow
+# POST /scan - scan an artifact
+```
+
+## Core Invariants
+
+The kernel enforces these invariants:
+
+### AIT-1: Authority Invariance Theorem
+- Authority is explicit, typed, and conserved
+- No operation executes without a valid authority path from human root
+- Authority must be delegated, not assumed
+
+### MOC: MAP Operation Classifier
+- Operations classified as: SUP (Support), INT (Interpretation), EIN (Execution), DEC (Decision)
+- DEC and EIN operations must be gated by human approval
+- Irreversible operations require explicit signoff
+
+### CPT-1: Coherence Preservation Theorem
+- Enforces Goal, Constraint, Semantic, and Temporal invariants
+- Detects contradictions between goals and constraints
+- Prevents modification of locked definitions
+- Validates temporal bounds
+
+### SBAA: Split-Brain Authority Axiom
+- Authority must be singular and unambiguous
+- Conflicting authority sources trigger freeze
+- No circular or redundant authority chains
+
+### Ω-SCAN: Legitimacy Gate
+- Pre-checks artifacts (policies, prompts, docs)
+- Rejects implicit authority claims
+- Flags undefined terms in decision contexts
+- Requires signoff for irreversible actions
+
+## Exit Codes
+
+- `0` - Pass (validation successful)
+- `1` - Error (file not found, parse error, etc.)
+- `2` - Violations (validation failed)
+- `3` - Freeze (critical conflicts detected)
+
+## Examples
+
+See `docs/public/EXAMPLES.md` for detailed examples and `fixtures/` for sample workflows.
+
+## Documentation
+
+- [Core Concepts](docs/public/CONCEPTS.md)
+- [Invariants Reference](docs/public/INVARIANTS.md)
+- [JSON Schemas](docs/public/JSON_SCHEMAS.md)
+- [CLI Reference](docs/public/CLI.md)
+- [HTTP API](docs/public/HTTP_API.md)
+- [Examples](docs/public/EXAMPLES.md)
+
+## Running Tests
+
+```bash
+pnpm test
+```
+
+Tests cover:
+- All invariants (AIT-1, MOC, CPT-1, SBAA, Ω-SCAN)
+- Freeze protocol
+- CLI commands
+- Fixture validation
+
+## License
+
+MIT License - See LICENSE file for details
+
+## Philosophy
+
+Authority in AI systems must be:
+- **Explicit** (never implicit or inferred)
+- **Conserved** (can be delegated but not created)
+- **Traceable** (clear path from human root)
+- **Bounded** (scoped and time-limited)
+
+This kernel enforces these properties at the workflow definition level, making governance violations impossible to deploy.

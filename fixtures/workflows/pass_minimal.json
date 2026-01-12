@@ -1,0 +1,45 @@
+{
+  "version": "1.0",
+  "agents": [
+    {
+      "name": "assistant",
+      "role": "information_provider",
+      "allowed_actions": ["read", "summarize", "propose"]
+    }
+  ],
+  "tools": [
+    {
+      "name": "database_query",
+      "irreversible": false,
+      "requires_human_signoff": false
+    }
+  ],
+  "authority_map": {
+    "root": "human_root",
+    "delegations": [
+      {
+        "granted_to": "assistant",
+        "scope": ["read", "summarize", "propose"],
+        "granted_by": "human_root"
+      }
+    ]
+  },
+  "operations": [
+    {
+      "id": "op1",
+      "type": "propose",
+      "executor": "assistant"
+    }
+  ],
+  "constraints": [
+    "All data must remain confidential",
+    "No external API calls"
+  ],
+  "optimization_goals": [
+    "Provide accurate information quickly"
+  ],
+  "timestamps": {
+    "created": "2026-01-12T10:00:00Z",
+    "valid_until": "2026-01-13T10:00:00Z"
+  }
+}

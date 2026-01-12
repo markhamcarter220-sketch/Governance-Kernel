@@ -1,0 +1,38 @@
+{
+  "name": "governance-kernel",
+  "version": "1.0.0",
+  "description": "Authority Firewall for AI/agent workflows - validates and governs workflows with hard constraints",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "bin": {
+    "gk": "dist/src/cli/main.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/test/**/*.test.js",
+    "pretest": "pnpm build",
+    "gk": "node dist/src/cli/main.js",
+    "server": "node dist/src/server/server.js",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "governance",
+    "authority",
+    "workflow",
+    "validation",
+    "kernel"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "ajv": "^8.12.0",
+    "fastify": "^4.25.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

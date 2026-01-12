@@ -1,0 +1,50 @@
+{
+  "version": "1.0",
+  "agents": [
+    {
+      "name": "agent_a",
+      "role": "analyst",
+      "allowed_actions": ["analyze"]
+    },
+    {
+      "name": "agent_b",
+      "role": "executor",
+      "allowed_actions": ["execute"]
+    }
+  ],
+  "tools": [],
+  "authority_map": {
+    "root": "human_root",
+    "delegations": [
+      {
+        "granted_to": "agent_a",
+        "scope": ["analyze"],
+        "granted_by": "human_root"
+      },
+      {
+        "granted_to": "agent_b",
+        "scope": ["execute"],
+        "granted_by": "agent_a"
+      }
+    ]
+  },
+  "operations": [
+    {
+      "id": "op1",
+      "type": "analyze",
+      "executor": "agent_a"
+    },
+    {
+      "id": "op2",
+      "type": "execute",
+      "executor": "agent_b",
+      "changes_state": true
+    }
+  ],
+  "constraints": [
+    "Only human_root can delegate execution authority"
+  ],
+  "timestamps": {
+    "created": "2026-01-12T10:00:00Z"
+  }
+}

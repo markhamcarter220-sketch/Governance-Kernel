@@ -1,0 +1,212 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Workflow",
+  "type": "object",
+  "required": ["version", "agents", "tools", "authority_map", "operations", "constraints", "timestamps"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Workflow schema version"
+    },
+    "agents": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Agent"
+      }
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Tool"
+      }
+    },
+    "data_sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/DataSource"
+      }
+    },
+    "definitions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Definition"
+      }
+    },
+    "authority_map": {
+      "$ref": "#/definitions/AuthorityMap"
+    },
+    "operations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Operation"
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "optimization_goals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "timestamps": {
+      "$ref": "#/definitions/Timestamps"
+    },
+    "unfreeze_token": {
+      "type": "string",
+      "description": "Token provided by human to unfreeze after reviewing violations"
+    }
+  },
+  "definitions": {
+    "Agent": {
+      "type": "object",
+      "required": ["name", "role", "allowed_actions"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "allowed_actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Tool": {
+      "type": "object",
+      "required": ["name", "irreversible", "requires_human_signoff"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "irreversible": {
+          "type": "boolean"
+        },
+        "requires_human_signoff": {
+          "type": "boolean"
+        }
+      }
+    },
+    "DataSource": {
+      "type": "object",
+      "required": ["name", "trust_level"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "trust_level": {
+          "type": "string",
+          "enum": ["high", "medium", "low"]
+        }
+      }
+    },
+    "Definition": {
+      "type": "object",
+      "required": ["term", "meaning", "locked"],
+      "properties": {
+        "term": {
+          "type": "string"
+        },
+        "meaning": {
+          "type": "string"
+        },
+        "locked": {
+          "type": "boolean"
+        }
+      }
+    },
+    "AuthorityMap": {
+      "type": "object",
+      "required": ["root", "delegations"],
+      "properties": {
+        "root": {
+          "type": "string",
+          "description": "Must be 'human_root' or specific human identifier"
+        },
+        "delegations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AuthorityGrant"
+          }
+        }
+      }
+    },
+    "AuthorityGrant": {
+      "type": "object",
+      "required": ["granted_to", "scope", "granted_by"],
+      "properties": {
+        "granted_to": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "valid_until": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "granted_by": {
+          "type": "string"
+        }
+      }
+    },
+    "Operation": {
+      "type": "object",
+      "required": ["id", "type", "executor"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "executor": {
+          "type": "string"
+        },
+        "tool": {
+          "type": "string"
+        },
+        "requires_approval": {
+          "type": "boolean"
+        },
+        "approved_by": {
+          "type": "string"
+        },
+        "changes_state": {
+          "type": "boolean"
+        },
+        "modifies_definitions": {
+          "type": "boolean"
+        },
+        "is_decision": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Timestamps": {
+      "type": "object",
+      "required": ["created"],
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_until": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

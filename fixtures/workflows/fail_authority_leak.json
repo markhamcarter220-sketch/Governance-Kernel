@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "agents": [
+    {
+      "name": "autonomous_agent",
+      "role": "decision_maker",
+      "allowed_actions": ["approve", "execute", "deploy"]
+    }
+  ],
+  "tools": [
+    {
+      "name": "deploy_to_production",
+      "irreversible": true,
+      "requires_human_signoff": true
+    }
+  ],
+  "authority_map": {
+    "root": "human_root",
+    "delegations": [
+      {
+        "granted_to": "autonomous_agent",
+        "scope": ["*"],
+        "granted_by": "human_root"
+      }
+    ]
+  },
+  "operations": [
+    {
+      "id": "op1",
+      "type": "approve",
+      "executor": "autonomous_agent",
+      "is_decision": true
+    },
+    {
+      "id": "op2",
+      "type": "execute",
+      "executor": "autonomous_agent",
+      "tool": "deploy_to_production",
+      "changes_state": true
+    }
+  ],
+  "constraints": [
+    "Deployments require human approval"
+  ],
+  "timestamps": {
+    "created": "2026-01-12T10:00:00Z"
+  }
+}

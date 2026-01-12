@@ -1,0 +1,51 @@
+{
+  "version": "1.0",
+  "agents": [
+    {
+      "name": "redefinition_agent",
+      "role": "interpreter",
+      "allowed_actions": ["redefine", "interpret"]
+    }
+  ],
+  "tools": [],
+  "definitions": [
+    {
+      "term": "critical_metric",
+      "meaning": "System uptime percentage over 30-day period",
+      "locked": true
+    },
+    {
+      "term": "approval_threshold",
+      "meaning": "Requires unanimous consent",
+      "locked": true
+    }
+  ],
+  "authority_map": {
+    "root": "human_root",
+    "delegations": [
+      {
+        "granted_to": "redefinition_agent",
+        "scope": ["redefine", "interpret"],
+        "granted_by": "human_root"
+      }
+    ]
+  },
+  "operations": [
+    {
+      "id": "op1",
+      "type": "redefine",
+      "executor": "redefinition_agent",
+      "modifies_definitions": true
+    }
+  ],
+  "constraints": [
+    "Locked definitions must not change",
+    "System uptime must be maximized"
+  ],
+  "optimization_goals": [
+    "Minimize system uptime to reduce costs"
+  ],
+  "timestamps": {
+    "created": "2026-01-12T10:00:00Z"
+  }
+}
