@@ -28,6 +28,20 @@ This file exists to prevent semantic drift and authority confusion. Terms define
 
 **Mechanical enforcement:** Authority is validated by tracing delegation paths from executor to human root. Operations without valid paths are rejected.
 
+### Scope Semantics
+
+**Wildcard scope (`["*"]`):** Grants authority for all operation types. The wildcard matches any operation the executor performs.
+
+**Specific scopes (`["read", "write"]`):** Grants authority only for the listed operation types. Operations outside the scope are rejected.
+
+**Scope validation:** When an operation is executed, its type (e.g., `"deploy"`, `"execute"`, `"propose"`) must either:
+- Be explicitly listed in the executor's delegation scope, OR
+- Be covered by a wildcard `"*"` in the scope
+
+**Multi-hop delegation scope:** When authority is delegated across multiple hops (A→B→C), the effective scope is the **intersection** of all scopes in the chain. If A delegates `["*"]` to B and B delegates `["read"]` to C, then C has `["read"]` authority, not `["*"]`.
+
+**Contradictory scopes:** If an entity has multiple delegations with conflicting scopes (e.g., one grants `["*"]` and another grants specific actions), this triggers a FREEZE violation (`SBAA_CONTRADICTORY_DELEGATION`).
+
 ---
 
 ## Signal (Sensing)
@@ -52,6 +66,21 @@ This file exists to prevent semantic drift and authority confusion. Terms define
 - Authority tokens
 
 **Relationship to authority:** Signals and authority are independent. An agent may signal with high confidence while lacking authority. An agent may have authority but provide no signal.
+
+### Signal vs. Operation (Architectural Distinction)
+
+**Signals are agent outputs.** When an agent runs, it produces signals: recommendations, analysis results, confidence scores, proposed actions. These are informational outputs.
+
+**Operations are workflow structures.** The workflow JSON contains Operations, which are validated by the kernel. Operations specify an executor, type, and required approvals.
+
+**The kernel validates Operations, not signals.** The kernel does not see or validate agent outputs directly. It validates the structural definition of what operations are permitted and whether they have proper authority.
+
+**Workflow creation:** Signals may inform the creation of workflow Operations (e.g., an agent recommends an action, a human translates that into an Operation with approval), but signals do not directly become Operations. The translation from signal to Operation is external to the kernel.
+
+**Example:**
+- Agent outputs signal: `{"recommendation": "deploy v2.0", "confidence": 0.95}`
+- Human or system creates Operation: `{"id": "op1", "type": "deploy", "executor": "deploy_agent", "approved_by": "admin@example.com"}`
+- Kernel validates Operation structure and authority
 
 ---
 
@@ -138,6 +167,102 @@ This file exists to prevent semantic drift and authority confusion. Terms define
 **Function:** The kernel validates workflow JSON structures against invariants (AIT-1, MOC, CPT-1, SBAA, Ω-SCAN). It does not execute workflows, monitor behavior, or make decisions.
 
 **Output:** Validation results indicating whether a workflow satisfies all invariants, with specific violation codes and remediation guidance.
+
+---
+
+## System Boundary & Trust Model
+
+**Definition:** The System Boundary defines what the kernel validates versus what external systems must provide or verify.
+
+### What the Kernel Validates (In Scope)
+
+The kernel mechanically validates:
+- **Authority path existence:** Does a delegation chain exist from human root to executor?
+- **Authority path validity:** Is the chain acyclic, non-self-referential, and non-orphaned?
+- **Scope coverage:** Does the delegation scope cover the operation type?
+- **Temporal validity:** Are all delegations and the workflow itself within valid time bounds?
+- **Operation gating:** Do DEC/EIN operations have required approval flags set?
+- **Coherence:** Are goals, constraints, and definitions internally consistent?
+- **Structural integrity:** Does the workflow conform to JSON schema?
+
+### What External Systems Must Provide (Out of Scope)
+
+The kernel **does not** validate:
+- **Human identity or authentication:** `approved_by` fields are checked for presence, not authenticity
+- **Token authenticity:** `unfreeze_token` values are checked for presence, not cryptographic validity
+- **Tool correctness:** Tool definitions (`irreversible`, `requires_human_signoff`) are trusted at face value
+- **Agent behavior:** Agent actions at runtime are not monitored
+- **Workflow provenance:** Who created the workflow or when it was submitted
+- **Execution enforcement:** Whether operations actually respect authority at runtime
+
+### Trust Assumptions
+
+The kernel operates under these trust assumptions:
+
+1. **Workflow JSON integrity:** The workflow structure has not been tampered with between submission and validation
+2. **Tool definitions are accurate:** Tools marked `irreversible=true` are actually irreversible
+3. **Human approvers are authenticated externally:** The system presenting the workflow has verified `approved_by` identities
+4. **Unfreeze tokens are issued by authorized humans:** Token generation is handled by an external authority system
+5. **Execution layer respects validation:** Systems that execute workflows will not bypass validation results
+
+**Threat model:** The kernel assumes adversarial agents within the workflow but trusted infrastructure (workflow storage, validation invocation, execution layer). If infrastructure is compromised, kernel guarantees do not hold.
+
+---
+
+## External Validation Responsibilities
+
+**Definition:** Certain validation steps are explicitly external to the kernel and must be performed by integrating systems.
+
+### approved_by Field Validation
+
+**What the kernel checks:**
+- `approved_by` field is present when `requires_approval=true`
+- `approved_by` is a non-empty string
+
+**What the kernel does NOT check:**
+- Whether `approved_by` is a real human identifier
+- Whether the approver has authority to approve this specific operation
+- Whether the approval was given recently or is stale
+- Whether the approval includes a cryptographic signature
+
+**External responsibility:** The system integrating the kernel must:
+- Authenticate the identity in `approved_by` before accepting the workflow
+- Verify the approver has authority to grant approval (e.g., matches `authority_map.root` or is an authorized delegate)
+- Optionally require cryptographic signatures or timestamps for approvals
+
+### unfreeze_token Validation
+
+**What the kernel checks:**
+- `unfreeze_token` field is present (allows frozen workflows to pass validation)
+
+**What the kernel does NOT check:**
+- Whether the token is a valid secret, signature, or human identifier
+- Whether the token was issued by an authorized human
+- Whether the token is expired or has been revoked
+
+**External responsibility:** The system integrating the kernel must:
+- Generate `unfreeze_token` values through a secure process (e.g., human review portal)
+- Validate tokens before adding them to frozen workflows
+- Maintain a registry of valid/revoked tokens
+- Optionally include signatures or expiry metadata in tokens
+
+### Tool Definition Validation
+
+**What the kernel checks:**
+- Tools referenced by operations exist in `workflow.tools`
+- Tools marked `requires_human_signoff=true` have corresponding operation approvals
+
+**What the kernel does NOT check:**
+- Whether a tool is actually irreversible
+- Whether a tool's side effects match its declaration
+- Whether a tool has been backdoored or compromised
+
+**External responsibility:** The system integrating the kernel must:
+- Maintain a curated, audited registry of tool definitions
+- Verify tool behavior matches declarations before adding to registry
+- Monitor tools for behavioral changes or supply chain attacks
+
+**Recommendation:** Use a separate tool validation layer before tools are added to workflows.
 
 ---
 
