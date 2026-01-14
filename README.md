@@ -15,6 +15,10 @@ Governance Kernel is a validation and governance system for AI/agent workflows. 
 - Not a model wrapper or inference layer
 - Not a workflow execution engine
 
+## Canonical Definitions
+
+Core terms (authority, signal, freeze, execution, triad) are formally defined in [`CANONICAL_TERMS.md`](CANONICAL_TERMS.md). These definitions are binding for this repository and all related implementations. Terminology drift is a governance violation.
+
 ## Core Principles
 
 1. **Capability ≠ Authority**: Just because an agent *can* do something doesn't mean it has authority to do it
