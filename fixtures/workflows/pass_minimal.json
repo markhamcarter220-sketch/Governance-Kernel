@@ -40,6 +40,6 @@
   ],
   "timestamps": {
     "created": "2026-01-12T10:00:00Z",
-    "valid_until": "2026-01-13T10:00:00Z"
+    "valid_until": "2027-12-31T23:59:59Z"
   }
 }

@@ -139,6 +139,29 @@ The following properties are **mechanically enforced**, not heuristic:
 
 The kernel makes certain classes of authority violations **structurally impossible** at the workflow level. It does not solve all AI governance problems.
 
+## Multi-Agent Safety & Scalability (MAG-1)
+
+This kernel satisfies a formally defined property called **MAG-1** (Multi-Agent Governance Strengthening), which establishes that adding agents to a workflow does not weaken safety guarantees.
+
+**Key Properties:**
+- **Authority is conserved**: Total authority in the system equals the authority delegated by human root, regardless of the number of agents
+- **Signals ≠ permission**: Agent recommendations, proposals, or votes are informational only and do not grant execution authority
+- **Disagreement triggers freeze, not resolution**: When agents conflict on authority or definitions, the system freezes rather than attempting algorithmic resolution
+
+**Scalability Guarantee:**
+Adding agents increases scrutiny (more potential detectors of violations) without increasing irreversible-action risk. An N-agent workflow is at least as safe as a 1-agent workflow with the same authority grants.
+
+**Adversarial Tolerance:**
+Adversarial agents are explicitly allowed in the threat model. A compromised agent cannot:
+- Self-authorize operations outside its granted scope
+- Delegate authority it does not possess
+- Modify locked definitions
+- Bypass human approval requirements
+
+The system degrades to freeze (safe halt) rather than degrading to unauthorized execution.
+
+**Reference:** This property is defined in the White Paper Library under MAG-1 (Multi-Agent Governance) and MAG-1A (Authority Conservation). See [`docs/public/MAG1_IMPLEMENTATION.md`](docs/public/MAG1_IMPLEMENTATION.md) for implementation details.
+
 ## Exit Codes
 
 - `0` - Pass (validation successful)
@@ -156,6 +179,7 @@ See `docs/public/EXAMPLES.md` for detailed examples and `fixtures/` for sample w
 - [Invariants Reference](docs/public/INVARIANTS.md)
 - [Invariant Coverage Map](docs/public/INVARIANT_COVERAGE.md)
 - [Authority Flow Tracing](docs/public/AUTHORITY_FLOW.md)
+- [MAG-1 Implementation](docs/public/MAG1_IMPLEMENTATION.md)
 - [JSON Schemas](docs/public/JSON_SCHEMAS.md)
 - [CLI Reference](docs/public/CLI.md)
 - [HTTP API](docs/public/HTTP_API.md)
